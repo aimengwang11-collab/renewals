@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>续费一览</title>
+  <style>
+    :root { --paper:#f4efe4; --card:#fffaf1; --line:#e4d8c2; --ink:#1f1a14; --muted:#5c5347; --soon:#8a5a00; --soon-bg:#fff4d6; --late:#9b1c1c; --late-bg:#fde8e8; --ok:#1b5e3b; --ok-bg:#e5f6ec; --wait:#3f4a6b; --wait-bg:#eef0f7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 ui-sans-serif, system-ui, sans-serif; }
+    header { position: sticky; top: 0; z-index: 5; background: #fffaf1f2; backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); padding: 14px 20px; }
+    .top { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 1.25rem; }
+    .sub { color: var(--muted); font-size: .9rem; margin: 4px 0 0; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, .btn { appearance: none; border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 10px; padding: 8px 12px; font: inherit; cursor: pointer; text-decoration: none; }
+    button.primary { background: var(--ink); color: var(--card); border-color: var(--ink); font-weight: 700; }
+    button.danger { color: var(--late); border-color: #e7b4b4; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    main { padding: 16px 20px 48px; max-width: 1200px; margin: 0 auto; }
+    .stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
+    .stat { border-radius: 999px; padding: 6px 12px; font-size: .9rem; background: #efe6d6; }
+    .stat.late { background: var(--late-bg); color: var(--late); }
+    .stat.soon { background: var(--soon-bg); color: var(--soon); }
+    .stat.wait { background: var(--wait-bg); color: var(--wait); }
+    .banner { background: #efe6d6; border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; color: var(--muted); }
+    .row-note, .empty { color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+    th, td { text-align: left; vertical-align: top; padding: 12px 12px; border-bottom: 1px solid var(--line); }
+    th { font-size: .8rem; letter-spacing: .04em; color: var(--muted); font-weight: 700; background: #f7f0e4; }
+    tr:last-child td { border-bottom: 0; }
+    tr.late { background: #fde8e866; }
+    tr.soon { background: #fff4d666; }
+    .name { font-weight: 700; }
+    .badge { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: .75rem; font-weight: 700; margin-left: 6px; }
+    .badge.late { background: var(--late-bg); color: var(--late); }
+    .badge.soon { background: var(--soon-bg); color: var(--soon); }
+    .badge.wait { background: var(--wait-bg); color: var(--wait); }
+    .badge.ok { background: var(--ok-bg); color: var(--ok); }
+    .date { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+    .date small { display: block; font-weight: 400; color: var(--muted); white-space: normal; padding-top: 2px; }
+    .note { color: var(--muted); max-width: 36ch; }
+    input, select, textarea { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    textarea { min-height: 72px; resize: vertical; }
+    dialog { border: 1px solid var(--line); border-radius: 16px; padding: 20px; width: min(420px, 92vw); background: var(--card); }
+    dialog::backdrop { background: #0006; }
+    dialog h2 { margin: 0 0 12px; font-size: 1.1rem; }
+    .err { color: var(--late); background: var(--late-bg); padding: 8px 10px; border-radius: 8px; }
+    .okmsg { color: var(--ok); }
+    #gate { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    #gate[hidden], #app[hidden] { display: none; }
+    .card { width: min(420px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px #00000012; }
+    .card h1 { margin-bottom: 8px; font-size: 1.4rem; }
+    .card p { margin: 0 0 16px; color: var(--muted); }
+    .card label { display: block; margin: 0 0 12px; font-weight: 600; }
+    .card input { margin-top: 6px; padding: 12px; }
+    .card button { width: 100%; margin-top: 8px; padding: 12px; }
+    .card code { font: inherit; background: #efe6d6; padding: 0 4px; border-radius: 4px; }
+    @media (max-width: 800px) {
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      tr { border-bottom: 8px solid var(--paper); padding: 8px 4px 12px; }
+      td { border: 0; padding: 4px 12px; }
+      td::before { content: attr(data-label); display: block; color: var(--muted); font-size: .75rem; font-weight: 700; margin-bottom: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <section id="gate" hidden>
+    <main class="card">
+      <h1 id="gate-title">续费一览</h1>
+      <p id="gate-copy">输入登录密码后就能看见全部订阅和到期日。</p>
+      <p class="err" id="gate-err" hidden></p>
+      <form id="gate-form">
+        <label>密码<input type="password" name="password" required minlength="8" autocomplete="current-password"></label>
+        <label id="confirm-wrap" hidden>再输入一次<input type="password" name="confirm" minlength="8" autocomplete="new-password"></label>
+        <button class="primary" type="submit" id="gate-submit">进入</button>
+      </form>
+    </main>
+  </section>
+  <div id="app" hidden>
+    <header>
+      <div class="top">
+        <div>
+          <h1>续费一览</h1>
+          <p class="sub" id="meta">正在读取…</p>
+        </div>
+        <div class="actions" id="view-actions">
+          <button class="primary" id="edit-btn" type="button">编辑</button>
+          <button id="pw-btn" type="button">改密码</button>
+          <button id="logout-btn" type="button">退出</button>
+        </div>
+        <div class="actions" id="edit-actions" hidden>
+          <button type="button" id="add-btn">加一条</button>
+          <button class="primary" type="button" id="save-btn">保存</button>
+          <button type="button" id="cancel-btn">取消</button>
+        </div>
+      </div>
+    </header>
+    <main>
+      <div class="stats" id="stats"></div>
+      <div class="banner" id="banner" hidden></div>
+      <p class="err" id="error" hidden></p>
+      <div id="table-wrap"></div>
+    </main>
+  </div>
+  <dialog id="pw-dialog">
+    <h2>改登录密码</h2>
+    <p>改完后，也请同步更新保险柜里「续费小站」那条。</p>
+    <p class="err" id="pw-err" hidden></p>
+    <form id="pw-form">
+      <label>旧密码<input type="password" name="oldPassword" required></label>
+      <label style="display:block;margin:10px 0">新密码（至少 8 位）<input type="password" name="newPassword" required minlength="8"></label>
+      <div class="actions">
+        <button class="primary" type="submit">更新</button>
+        <button type="button" id="pw-cancel">取消</button>
+      </div>
+    </form>
+  </dialog>
+  <script>
+    const API_BASE = location.hostname.endsWith("github.io")
+      ? "https://albert-renewals.aimengwang11.workers.dev"
+      : "";
+    const TOKEN_KEY = "renewals_token";
+    const STATUS = ["在用", "将停", "已到期", "按量", "待核实", "已取消", "不用了"];
+    const RENEW = ["开", "关", "待核实", "不适用"];
+    const TZ = "Asia/Taipei";
+    let data = { items: [], updatedAt: "", updatedNote: "" };
+    let backup = null;
+    let editing = false;
+    let needsSetup = false;
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    function token() { return localStorage.getItem(TOKEN_KEY) || ""; }
+    function setToken(t) { if (t) localStorage.setItem(TOKEN_KEY, t); }
+    function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+    function api(path, opts = {}) {
+      const headers = Object.assign({ Accept: "application/json" }, opts.headers || {});
+      const t = token();
+      if (t) headers.Authorization = "Bearer " + t;
+      return fetch(API_BASE + path, Object.assign({ credentials: "include" }, opts, { headers }));
+    }
+
+    function showGate(setup) {
+      needsSetup = setup;
+      $("app").hidden = true;
+      $("gate").hidden = false;
+      $("gate-err").hidden = true;
+      $("gate-title").textContent = setup ? "先设一个登录密码" : "续费一览";
+      $("gate-copy").innerHTML = setup
+        ? "设好后，请把这个密码存进 Grok Bot 的保险柜，标题用「续费小站」，用户名填 <code>albert</code>。这样其他助手也能登录看见。"
+        : "输入登录密码后就能看见全部订阅和到期日。";
+      $("confirm-wrap").hidden = !setup;
+      $("gate-form").confirm.required = setup;
+      $("gate-form").password.minLength = setup ? 8 : 1;
+      $("gate-form").password.autocomplete = setup ? "new-password" : "current-password";
+      $("gate-submit").textContent = setup ? "保存并进入" : "进入";
+      $("gate-form").password.focus();
+    }
+    function showApp() { $("gate").hidden = true; $("app").hidden = false; }
+
+    async function boot() {
+      try {
+        const health = await api("/health");
+        const body = await health.json();
+        if (!body.setup) { showGate(true); return; }
+        const res = await api("/api/data");
+        if (res.status === 401) { showGate(false); return; }
+        if (!res.ok) throw new Error("读取失败");
+        data = await res.json();
+        showApp();
+        render();
+      } catch (err) {
+        showGate(false);
+        $("gate-err").hidden = false;
+        $("gate-err").textContent = "连不上小站，请稍后再打开。";
+      }
+    }
+
+    $("gate-form").onsubmit = async (e) => {
+      e.preventDefault();
+      $("gate-err").hidden = true;
+      const fd = new FormData($("gate-form"));
+      const payload = { password: fd.get("password"), confirm: fd.get("confirm") };
+      const path = needsSetup ? "/setup" : "/login";
+      const res = await api(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) { $("gate-err").hidden = false; $("gate-err").textContent = body.error || "登录失败"; return; }
+      if (body.token) setToken(body.token);
+      $("gate-form").reset();
+      await boot();
+    };
+
+    $("logout-btn").onclick = async () => {
+      clearToken();
+      try { await api("/logout", { method: "POST" }); } catch {}
+      showGate(false);
+    };
+
+    function todayStamp() {
+      return new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    }
+    function daysUntil(dateStr) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || "")) return null;
+      const t = todayStamp();
+      const a = Date.parse(dateStr + "T00:00:00+08:00");
+      const b = Date.parse(t + "T00:00:00+08:00");
+      return Math.round((a - b) / 86400000);
+    }
+    function urgency(item) {
+      const d = daysUntil(item.nextDate);
+      if (d === null) return item.status === "待核实" ? "wait" : "";
+      if (d < 0) return "late";
+      if (d <= 14) return "soon";
+      return "";
+    }
+    function urgencyLabel(item) {
+      const d = daysUntil(item.nextDate);
+      if (d === null) return "";
+      if (d < 0) return "已过期 " + Math.abs(d) + " 天";
+      if (d === 0) return "今天";
+      if (d <= 14) return "还有 " + d + " 天";
+      return "";
+    }
+    function formatWhen(iso) {
+      if (!iso) return "未知";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+      try {
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso;
+        return new Intl.DateTimeFormat("zh-TW", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(d) + " 台北";
+      } catch { return iso; }
+    }
+    function sorted(items) {
+      return items.slice().sort((a, b) => {
+        const da = a.nextDate && /^\d{4}-\d{2}-\d{2}$/.test(a.nextDate) ? a.nextDate : "9999-99-99";
+        const db = b.nextDate && /^\d{4}-\d{2}-\d{2}$/.test(b.nextDate) ? b.nextDate : "9999-99-99";
+        if (da !== db) return da < db ? -1 : 1;
+        return (a.name || "").localeCompare(b.name || "", "zh");
+      });
+    }
+    function render() {
+      const today = todayStamp();
+      const items = data.items || [];
+      const late = items.filter((i) => urgency(i) === "late").length;
+      const soon = items.filter((i) => urgency(i) === "soon").length;
+      const wait = items.filter((i) => i.status === "待核实").length;
+      $("stats").innerHTML =
+        `<span class="stat">今天 ${esc(today)}（台北）</span>` +
+        `<span class="stat late">已过期 ${late}</span>` +
+        `<span class="stat soon">14 天内 ${soon}</span>` +
+        `<span class="stat wait">待核实 ${wait}</span>` +
+        `<span class="stat">共 ${items.length} 条</span>`;
+      $("meta").textContent = "上次更新：" + formatWhen(data.updatedAt);
+      if (data.updatedNote) { $("banner").hidden = false; $("banner").textContent = data.updatedNote; }
+      else $("banner").hidden = true;
+      $("view-actions").hidden = editing;
+      $("edit-actions").hidden = !editing;
+      if (!items.length && !editing) {
+        $("table-wrap").innerHTML = `<p class="empty">还没有条目。点右上角「编辑」加一条。</p>`;
+        return;
+      }
+      const rows = (editing ? items : sorted(items)).map((it, idx) => editing ? editRow(it, idx) : viewRow(it)).join("");
+      $("table-wrap").innerHTML = `<table><thead><tr>
+        <th>服务</th><th>方案和价格</th><th>下次扣费或到期</th><th>自动续费</th><th>付款</th><th>备注</th>
+        ${editing ? "<th></th>" : ""}
+      </tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    function viewRow(it) {
+      const u = urgency(it);
+      const lab = urgencyLabel(it);
+      const badge = lab ? `<span class="badge ${u}">${esc(lab)}</span>` : (it.status === "待核实" ? `<span class="badge wait">待核实</span>` : (it.status ? `<span class="badge ${it.status === "在用" ? "ok" : ""}">${esc(it.status)}</span>` : ""));
+      const date = it.nextDate ? esc(it.nextDate) : "未定";
+      return `<tr class="${u}">
+        <td data-label="服务"><div class="name">${esc(it.name)} ${badge}</div></td>
+        <td data-label="方案和价格">${esc(it.plan)}</td>
+        <td data-label="下次扣费或到期"><div class="date">${date}${it.dateNote ? `<small>${esc(it.dateNote)}</small>` : ""}</div></td>
+        <td data-label="自动续费">${esc(it.autoRenew)}</td>
+        <td data-label="付款">${esc(it.payment)}</td>
+        <td data-label="备注" class="note">${esc(it.note)}</td>
+      </tr>`;
+    }
+    function opts(list, val) {
+      const v = val || "";
+      const all = list.includes(v) ? list : (v ? [v, ...list] : list);
+      return all.map((x) => `<option ${x === v ? "selected" : ""}>${esc(x)}</option>`).join("");
+    }
+    function editRow(it, idx) {
+      return `<tr data-idx="${idx}">
+        <td data-label="服务"><input class="f-name" value="${esc(it.name)}"></td>
+        <td data-label="方案和价格"><input class="f-plan" value="${esc(it.plan)}"></td>
+        <td data-label="下次扣费或到期"><input class="f-date" type="date" value="${esc(/^\d{4}-\d{2}-\d{2}$/.test(it.nextDate||"") ? it.nextDate : "")}"><input class="f-datenote" placeholder="日期说明" value="${esc(it.dateNote)}"></td>
+        <td data-label="自动续费"><select class="f-renew">${opts(RENEW, it.autoRenew)}</select></td>
+        <td data-label="付款"><input class="f-pay" value="${esc(it.payment)}"></td>
+        <td data-label="备注"><textarea class="f-note">${esc(it.note)}</textarea><input class="f-status" list="status-list" value="${esc(it.status)}" placeholder="状态"></td>
+        <td data-label=""><button class="danger del-btn" type="button">删除</button><input type="hidden" class="f-id" value="${esc(it.id)}"></td>
+      </tr>`;
+    }
+    function collect() {
+      return [...document.querySelectorAll("tbody tr")].map((tr) => ({
+        id: tr.querySelector(".f-id").value,
+        name: tr.querySelector(".f-name").value.trim(),
+        plan: tr.querySelector(".f-plan").value,
+        nextDate: tr.querySelector(".f-date").value,
+        dateNote: tr.querySelector(".f-datenote").value,
+        autoRenew: tr.querySelector(".f-renew").value,
+        payment: tr.querySelector(".f-pay").value,
+        status: tr.querySelector(".f-status").value,
+        note: tr.querySelector(".f-note").value,
+      }));
+    }
+
+    $("edit-btn").onclick = () => {
+      backup = JSON.parse(JSON.stringify(data));
+      editing = true;
+      render();
+      if (!$("status-list")) {
+        const dl = document.createElement("datalist");
+        dl.id = "status-list";
+        dl.innerHTML = STATUS.map((s) => `<option value="${s}">`).join("");
+        document.body.appendChild(dl);
+      }
+    };
+    $("cancel-btn").onclick = () => { data = backup || data; editing = false; render(); };
+    $("add-btn").onclick = () => {
+      data.items = collect();
+      data.items.push({ id: crypto.randomUUID(), name: "", plan: "", nextDate: "", dateNote: "", autoRenew: "待核实", payment: "", status: "待核实", note: "" });
+      render();
+    };
+    $("table-wrap").addEventListener("click", (e) => {
+      const btn = e.target.closest(".del-btn");
+      if (!btn) return;
+      const tr = btn.closest("tr");
+      data.items = collect().filter((_, i) => i !== Number(tr.dataset.idx));
+      render();
+    });
+    $("save-btn").onclick = async () => {
+      $("error").hidden = true;
+      const items = collect();
+      if (items.some((it) => !it.name)) { $("error").hidden = false; $("error").textContent = "每一条都要有名称，空的先删掉或补上。"; return; }
+      $("save-btn").disabled = true;
+      try {
+        const res = await api("/api/data", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ items, updatedNote: "" }) });
+        if (res.status === 401) { showGate(false); return; }
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "保存失败");
+        data = await res.json();
+        editing = false;
+        render();
+      } catch (err) {
+        $("error").hidden = false;
+        $("error").textContent = err.message || "保存失败";
+      } finally {
+        $("save-btn").disabled = false;
+      }
+    };
+    $("pw-btn").onclick = () => { $("pw-err").hidden = true; $("pw-dialog").showModal(); };
+    $("pw-cancel").onclick = () => $("pw-dialog").close();
+    $("pw-form").onsubmit = async (e) => {
+      e.preventDefault();
+      $("pw-err").hidden = true;
+      const fd = new FormData($("pw-form"));
+      const res = await api("/api/password", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ oldPassword: fd.get("oldPassword"), newPassword: fd.get("newPassword") }) });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) { $("pw-err").hidden = false; $("pw-err").textContent = body.error || "改密码失败"; return; }
+      if (body.token) setToken(body.token);
+      $("pw-dialog").close();
+      $("pw-form").reset();
+    };
+
+    boot();
+  </script>
+</body>
+</html>
